@@ -18,8 +18,6 @@ class ParameterBuilder:
             ('authKey', self.auth_key_),
             ('dataVer', str(fgourl.data_ver_)),
             ('dateVer', str(fgourl.date_ver_)),
-            ('idempotencyKey', str(uuid.uuid4())),
-            ('lastAccessTime', str(mytime.GetTimeStamp())),
             ('userId', self.uid_),
             ('verCode', fgourl.ver_code_),
         ]
@@ -54,8 +52,6 @@ class ParameterBuilder:
             ('authKey', self.auth_key_),
             ('dataVer', str(fgourl.data_ver_)),
             ('dateVer', str(fgourl.date_ver_)),
-            ('idempotencyKey', str(uuid.uuid4())),
-            ('lastAccessTime', str(mytime.GetTimeStamp())),
             ('userId', self.uid_),
             ('verCode', fgourl.ver_code_),
         ]
@@ -74,14 +70,18 @@ class user:
         return res
 
     def topLogin(self):
-        lastAccessTime = self.builder_.parameter_list_[5][1]
+         lastAccessTime = str(mytime.GetTimeStamp())
         userState = (-int(lastAccessTime) >> 2) ^ self.user_id_ & fgourl.data_server_folder_crc_
 
         self.builder_.AddParameter('assetbundleFolder', fgourl.asset_bundle_folder_)
         self.builder_.AddParameter('isTerminalLogin', '1')
         self.builder_.AddParameter('userState', str(userState))
+        self.builder_.AddParameter('lastAccessTime', lastAccessTime)
+        idempotencyKey = str(uuid.uuid4())
+        idempotencyKeySignature = fgourl.getSignature(self.user_id_, idempotencyKey)
+        self.builder_.AddParameter('idempotencyKey', idempotencyKey)
+        self.builder_.AddParameter('idempotencyKeySignature', idempotencyKeySignature)
         data = self.Post(f'{fgourl.server_addr_}/login/top?_userId={self.user_id_}')
-
 #        self.name_ = hashlib.md5(data['cache']['replaced']['userGame'][0]['name'].encode('utf-8')).hexdigest()
         self.name_ = data['cache']['replaced']['userGame'][0]['name']
         stone = data['cache']['replaced']['userGame'][0]['stone']
@@ -136,4 +136,7 @@ class user:
         return res
 
     def topHome(self):
+        lastAccessTime = str(mytime.GetTimeStamp())
+        self.builder_.AddParameter('idempotencyKey', str(uuid.uuid4()))
+        self.builder_.AddParameter('lastAccessTime', lastAccessTime)
         self.Post(f'{fgourl.server_addr_}/home/top?_userId={self.user_id_}')
