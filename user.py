@@ -70,7 +70,7 @@ class user:
         return res
 
     def topLogin(self):
-         lastAccessTime = str(mytime.GetTimeStamp())
+        lastAccessTime = str(mytime.GetTimeStamp())
         userState = (-int(lastAccessTime) >> 2) ^ self.user_id_ & fgourl.data_server_folder_crc_
 
         self.builder_.AddParameter('assetbundleFolder', fgourl.asset_bundle_folder_)
